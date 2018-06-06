@@ -79,10 +79,11 @@ def org(lin,cub):
 		cub += ['w']
 
 
-im = cv2.imread("R5.jpg")
+im = cv2.imread("R3.jpg")
 im = cv2.bilateralFilter(im,9,75,75)
 im = cv2.fastNlMeansDenoisingColored(im,None,10,10,7,21)
-hsv_img = cv2.cvtColor(im, cv2.COLOR_BGR2HSV)   # HSV image
+hsv_img = cv2.cvtColor(im, cv2.COLOR_BGR2HSV)   
+# HSV image
 #Verdes:
 verde_bajos = np.array([60,60,100],np.uint8)
 verde_altos = np.array([80, 255, 255],np.uint8)

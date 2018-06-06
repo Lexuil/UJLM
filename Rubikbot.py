@@ -52,7 +52,7 @@ class Rubikbot:
 		sys.stderr.write(instr)
 	
 	def calibratearm(self, arm, dir, val):
-		dird = {"derecha":0x20,"izquierda":0x21,"medio":0x22,"atras":0x23,"adelante":0x24}
+		dird = {"derecha":0x20,"izquierda":0x21,"medio":0x22,"atras":0x23,"adelante":0x24,"derecha1":0x25,"izquierda1":0x26,"medio1":0x27,"atras1":0x28,"adelante1":0x29}
 		self.ser.write(struct.pack("BBBBB",0xFC ,arm ,dird[dir] ,val , 0xF0))
 		check = self.ser.read(14)
 		sys.stderr.write(check)

@@ -6,31 +6,44 @@ import numpy as np
 
 import sys
 
-import os
-import pycuber as pc
-from pycuber.solver import CFOPSolver
-
 
 import cv2
 from cv2 import *
 
 
 
+def dcontour2 (mask):
 
-def dcontours (mask):
     kernel = np.ones((10,10),np.uint8)
     mask = cv2.morphologyEx(mask,cv2.MORPH_OPEN,kernel)
     mask = cv2.morphologyEx(mask,cv2.MORPH_CLOSE,kernel)
     contours, hierarchy = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     return contours
 
+def dcontours (mask):
 
-def print_color (cnts, col=(255,0,0)):
+    ret,thresh = cv2.threshold(mask,127,255,0)
+    cv2.imshow("Show1" ,thresh)
+    contours, hierarchy = cv2.findContours(thresh,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
+
+    return contours
+
+
+def print_color (cnts, c='n'):
     coord=[]  
+    if c =='w': col=(0,0,0)
+    elif c== 'b': col=(255,0,0)
+    elif c== 'g': col=(0,255,0)
+    elif c== 'r': col=(0,0,255)
+    elif c== 'o': col=(32, 164,255)
+    elif c== 'y': col=(0, 255, 255)
+    else : col=(255,255,255)
+    #print c
     for cnt in cnts:
         x,y,w,h = cv2.boundingRect(cnt)
-        if (h >40 and w >40):
-            coord.append ((x,y))
+        #print h, w
+        if (45<h <70 and 45<w<70):
+            coord.append ([x,y,c])
             cv2.rectangle(im,(x,y),(x+w,y+h),col,2)
     return coord
 
@@ -93,7 +106,7 @@ azul_altos = np.array([115, 255, 255], np.uint8)
 
 
 # rojo
-rojo_bajos = np.array([0,50,90], np.uint8)
+rojo_bajos = np.array([1,50,90], np.uint8)
 rojo_altos = np.array([18, 250, 175], np.uint8)
 
 # Naranja
@@ -105,15 +118,20 @@ naranja_altos = np.array([15, 255, 255], np.uint8)
 amarillo_bajos = np.array([30,67,100], np.uint8)
 amarillo_altos = np.array([50, 255, 255], np.uint8)
 
+
 # blanco
 
-blanco_bajos = np.array([1,5,130], np.uint8)
-blanco_altos = np.array([2, 30, 255], np.uint8)
+sensitivity = 95
+blanco_bajos = np.array([0,0,255-sensitivity])
+blanco_altos = np.array([255,sensitivity,255])
 
 #blanco_bajos = np.array([40,5,130], np.uint8)
 #blanco_altos = np.array([80, 30, 255], np.uint8)
 
-def colorrec(file,file1,carascubo1):
+def getKey(item):
+    return item[1]
+
+def colorrec(file,file1):
 
     mask_green= cv2.inRange(hsv_img, verde_bajos, verde_altos) 
     mask_blue = cv2.inRange(hsv_img, azul_bajos, azul_altos)  
@@ -123,130 +141,53 @@ def colorrec(file,file1,carascubo1):
     mask_white = cv2.inRange(hsv_img, blanco_bajos, blanco_altos)  
 
 
-    contours =dcontours(mask_white)
-
-    ww = print_color(contours,(0,0,0))
-    print "blanco",  ww
+    colorsa=[]
 
     contours =dcontours(mask_green)
-
-    gg = print_color(contours,(0,255,0))
-    print "Verdes", gg
+    colorsa+=(print_color(contours,'g'))
 
     contours =dcontours(mask_blue)
-
-    bb = print_color(contours,(255,0,0))
-    print "azules", bb
+    colorsa+=(print_color(contours,'b'))
 
     contours =dcontours(mask_red)
-
-    rr = print_color(contours,(0,0,255))
-    print "rojo", rr
+    colorsa+=(print_color(contours,'r'))
 
     contours =dcontours(mask_orange)
-
-    oo = print_color(contours,(32, 164,255))
-    print "naranja", oo
+    colorsa+=(print_color(contours,'o'))
 
     contours =dcontours(mask_yellow)
+    colorsa+=(print_color(contours,'y'))
 
-    yy = print_color(contours,(0,255,255))
-    print "amarillo", yy
+    contours =dcontours(mask_white)
+    colorsa+=(print_color(contours,'w'))
 
-    for x in range(0,len(ww)):
-        ww[x] = (ww[x][0],ww[x][1],'w')
+    print "colours: ", colorsa
 
-    for x in range(0,len(gg)):
-        gg[x] = (gg[x][0],gg[x][1],'g')
 
-    for x in range(0,len(bb)):
-        bb[x] = (bb[x][0],bb[x][1],'b')
+    colorsa.sort(key=getKey)
 
-    for x in range(0,len(rr)):
-        rr[x] = (rr[x][0],rr[x][1],'r')
 
-    for x in range(0,len(oo)):
-        oo[x] = (oo[x][0],oo[x][1],'o')
 
-    for x in range(0,len(yy)):
-        yy[x] = (yy[x][0],yy[x][1],'y')
 
-    face = []
 
-    face += ww
-    face += gg
-    face += bb
-    face += rr
-    face += oo
-    face += yy
+    print colorsa[:]
+    l1=sorted(colorsa[0:3])
+    l2=sorted(colorsa[3:6])
+    l3=sorted(colorsa[6:])
+    print "linea 1", l1
+    print "linea2", l2
+    print "linea3",l3, len(colorsa)
 
-    face.sort(key=lambda face: face[1])
+    result=[]
+    for i in l1:
+        result.append(i[2])
 
-    linea1 = []
-    linea2 = []
-    linea3 = []
+    for i in l2:
+        result.append(i[2])
 
-    print "\nface: " , face ,"\n"
-
-    nux = []
-    nuy = []
-
-    for x in range(0,len(face)):
-        nux += [face[x][0]]
-
-    for x in range(0,len(face)):
-        nuy += [face[x][1]]
-
-    nux.sort()
-    nuy.sort()
-
-    print nux
-    print nuy,"\n"
-
-    mmix = nux[0]
-    mmax = nux[len(nux)-1]
-
-    mmiy = nuy[0]
-    mmay = nuy[len(nuy)-1]
-
-    print mmax
-    print mmix
-    print mmay
-    print mmiy,"\n"
-
-    for x in range(0,len(face)):
-        if ((face[0][1]-20) < face[x][1] < (face[0][1]+20) and mmiy-20 < face[x][1] < mmiy+20):
-            linea1 += [face[x]]
-
-    l1 = len(linea1)
-
-    for x in range(l1,len(face)):
-        if ((face[l1][1]-20) < face[x][1] < (face[l1][1]+20) and mmiy+20 < face[x][1] < mmay-20):
-            linea2 += [face[x]]
-
-    l2 = len(linea2) + l1
-
-    for x in range(l2,len(face)):
-        if ((face[l2][1]-20) < face[x][1] < (face[l2][1]+20) and mmay-20 < face[x][1] < mmay+20):
-            linea3 += [face[x]]
-
-    linea1.sort()
-    linea2.sort()
-    linea3.sort()
-
-    print linea1
-    print linea2
-    print linea3,"\n"
-
-    cube = []
-
-    org(linea1,cube,mmax,mmix)
-    org(linea2,cube,mmax,mmix)
-    org(linea3,cube,mmax,mmix)
-
-    print cube
-    carascubo1 += [cube]
-    print carascubo1
+    for i in l3:
+        result.append(i[2])
+    print result
 
     cv2.imshow("Show",im)
     cv2.imwrite(file1, im)
@@ -258,11 +199,6 @@ def colorrec(file,file1,carascubo1):
 rubikbot = Rubikbot("/dev/ttyUSB1")
 nfile = ["R1.jpg","R2.jpg","R3.jpg","R4.jpg","R5.jpg","R6.jpg"]
 nfile1 = ["eR1.jpg","eR2.jpg","eR3.jpg","eR4.jpg","eR5.jpg","eR6.jpg"]
-
-carascubo = [['g', 'o', 'g', 'w', 'r', 'b', 'r', 'w', 'b'], ['y', 'g', 'y', 'w', 'w', 'w', 'b', 'y', 'g'], ['w', 'r', 'b', 'y', 'g', 'w', 'r', 'g', 'r'], ['w', 'r', 'w', 'y', 'w', 'b', 'b', 'y', 'w'], ['y', 'y', 'g', 'b', 'o', 'o', 'g', 'r', 'o'], ['o', 'w', 'w', 'g', 'b', 'o', 'b', 'o', 'y']]
-
-child = ""
-paso = {"r":"0","y":"1","g":"2","w":"3","o":"4","b":"5"}
 
 rubikbot.begin()
 
@@ -321,7 +257,6 @@ while(1):
         rubikbot.cara(int(us1[1]))
 
     if (us1[0] == "ver" and us1[1] == "cubo"):
-        carascubo = []
         for x in range(0,6):
             rubikbot.cam_reset()
             time.sleep(2)
@@ -331,38 +266,6 @@ while(1):
             im = cv2.bilateralFilter(im,9,75,75)
             im = cv2.fastNlMeansDenoisingColored(im,None,10,10,7,21)
             hsv_img = cv2.cvtColor(im, cv2.COLOR_BGR2HSV)
-            colorrec(nfile[x],nfile1[x],carascubo)
+            colorrec(nfile[x],nfile1[x])
             rubikbot.cara(x+2)
-
-    if(us1[0] == "crear" and us1[1] == "algoritmo"):
-        for x in range(0,6):
-            for y in range(0,9):
-                child += paso[carascubo[x][y]]
-
-        print child
-
-        c = pc.Cube()
-        c.children = pc.array_to_cubies(child)
-
-        c
-
-        c.perform_algo('F F F F')
-        c.perform_algo('B B B B')
-        c.perform_algo('D D D D')
-        c.perform_algo('R R R R')
-        c.perform_algo('L L L L')
-        c.perform_algo('U U U U')
-
-        sol = CFOPSolver(c)
-        sol1 = sol.solve()
-
-    if(us1[0] == "crear" and us1[1] == "algoritmo"):
-        for x in range(0,len(sol1)):
-            sol2 = str(sol1[x])
-            if len(sol2 == 2):
-                rubikbot.movearm(sol2)
-            else:
-                sol2 += 'a'
-                rubikbot.movearm(sol2)
-
         

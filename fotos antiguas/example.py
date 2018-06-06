@@ -6,10 +6,6 @@ import numpy as np
 
 import sys
 
-import os
-import pycuber as pc
-from pycuber.solver import CFOPSolver
-
 
 import cv2
 from cv2 import *
@@ -93,7 +89,7 @@ azul_altos = np.array([115, 255, 255], np.uint8)
 
 
 # rojo
-rojo_bajos = np.array([0,50,90], np.uint8)
+rojo_bajos = np.array([1,50,90], np.uint8)
 rojo_altos = np.array([18, 250, 175], np.uint8)
 
 # Naranja
@@ -113,7 +109,7 @@ blanco_altos = np.array([2, 30, 255], np.uint8)
 #blanco_bajos = np.array([40,5,130], np.uint8)
 #blanco_altos = np.array([80, 30, 255], np.uint8)
 
-def colorrec(file,file1,carascubo1):
+def colorrec(file,file1):
 
     mask_green= cv2.inRange(hsv_img, verde_bajos, verde_altos) 
     mask_blue = cv2.inRange(hsv_img, azul_bajos, azul_altos)  
@@ -245,8 +241,6 @@ def colorrec(file,file1,carascubo1):
     org(linea3,cube,mmax,mmix)
 
     print cube
-    carascubo1 += [cube]
-    print carascubo1
 
     cv2.imshow("Show",im)
     cv2.imwrite(file1, im)
@@ -258,11 +252,6 @@ def colorrec(file,file1,carascubo1):
 rubikbot = Rubikbot("/dev/ttyUSB1")
 nfile = ["R1.jpg","R2.jpg","R3.jpg","R4.jpg","R5.jpg","R6.jpg"]
 nfile1 = ["eR1.jpg","eR2.jpg","eR3.jpg","eR4.jpg","eR5.jpg","eR6.jpg"]
-
-carascubo = [['g', 'o', 'g', 'w', 'r', 'b', 'r', 'w', 'b'], ['y', 'g', 'y', 'w', 'w', 'w', 'b', 'y', 'g'], ['w', 'r', 'b', 'y', 'g', 'w', 'r', 'g', 'r'], ['w', 'r', 'w', 'y', 'w', 'b', 'b', 'y', 'w'], ['y', 'y', 'g', 'b', 'o', 'o', 'g', 'r', 'o'], ['o', 'w', 'w', 'g', 'b', 'o', 'b', 'o', 'y']]
-
-child = ""
-paso = {"r":"0","y":"1","g":"2","w":"3","o":"4","b":"5"}
 
 rubikbot.begin()
 
@@ -321,7 +310,6 @@ while(1):
         rubikbot.cara(int(us1[1]))
 
     if (us1[0] == "ver" and us1[1] == "cubo"):
-        carascubo = []
         for x in range(0,6):
             rubikbot.cam_reset()
             time.sleep(2)
@@ -331,38 +319,6 @@ while(1):
             im = cv2.bilateralFilter(im,9,75,75)
             im = cv2.fastNlMeansDenoisingColored(im,None,10,10,7,21)
             hsv_img = cv2.cvtColor(im, cv2.COLOR_BGR2HSV)
-            colorrec(nfile[x],nfile1[x],carascubo)
+            colorrec(nfile[x],nfile1[x])
             rubikbot.cara(x+2)
-
-    if(us1[0] == "crear" and us1[1] == "algoritmo"):
-        for x in range(0,6):
-            for y in range(0,9):
-                child += paso[carascubo[x][y]]
-
-        print child
-
-        c = pc.Cube()
-        c.children = pc.array_to_cubies(child)
-
-        c
-
-        c.perform_algo('F F F F')
-        c.perform_algo('B B B B')
-        c.perform_algo('D D D D')
-        c.perform_algo('R R R R')
-        c.perform_algo('L L L L')
-        c.perform_algo('U U U U')
-
-        sol = CFOPSolver(c)
-        sol1 = sol.solve()
-
-    if(us1[0] == "crear" and us1[1] == "algoritmo"):
-        for x in range(0,len(sol1)):
-            sol2 = str(sol1[x])
-            if len(sol2 == 2):
-                rubikbot.movearm(sol2)
-            else:
-                sol2 += 'a'
-                rubikbot.movearm(sol2)
-
         
